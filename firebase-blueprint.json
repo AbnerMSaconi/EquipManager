@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "Item": {
+      "title": "Item",
+      "description": "An equipment item in the inventory",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the equipment" },
+        "description": { "type": "string", "description": "Description of the equipment" },
+        "quantity": { "type": "number", "description": "Current quantity in stock" },
+        "category": { "type": "string", "description": "Category of the item" }
+      },
+      "required": ["name", "quantity"]
+    },
+    "Log": {
+      "title": "Log",
+      "description": "A log entry for inventory actions (withdraw or receive)",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string", "description": "ID of the item" },
+        "itemName": { "type": "string", "description": "Name of the item at the time of log" },
+        "userId": { "type": "string", "description": "ID of the user who performed the action" },
+        "userEmail": { "type": "string", "description": "Email of the user who performed the action" },
+        "actionType": { "type": "string", "enum": ["retirada", "recebimento"], "description": "Type of action" },
+        "quantity": { "type": "number", "description": "Quantity involved in the action" },
+        "destination": { "type": "string", "description": "Destination of the withdrawn item" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the action occurred" },
+        "returnDeadline": { "type": "string", "format": "date-time", "description": "Optional return deadline for loans" }
+      },
+      "required": ["itemId", "itemName", "userId", "actionType", "quantity", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/items/{itemId}": {
+      "schema": "Item",
+      "description": "Collection of equipment items"
+    },
+    "/logs/{logId}": {
+      "schema": "Log",
+      "description": "Collection of inventory transaction logs"
+    }
+  }
+}

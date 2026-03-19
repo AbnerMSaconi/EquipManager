@@ -1,0 +1,5 @@
+{
+  "name": "EquipManager",
+  "description": "Sistema de gerenciamento de equipamentos com controle de estoque e logs de movimentação.",
+  "requestFramePermissions": ["camera"]
+}

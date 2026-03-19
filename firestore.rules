@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isValidItem(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.quantity is number && data.quantity >= 0 &&
+             (!('description' in data) || (data.description is string && data.description.size() < 500)) &&
+             (!('category' in data) || (data.category is string && data.category.size() < 50));
+    }
+    
+    function isValidLog(data) {
+      return data.itemId is string &&
+             data.itemName is string &&
+             data.userId == request.auth.uid &&
+             data.actionType in ['retirada', 'recebimento'] &&
+             data.quantity is number && data.quantity > 0 &&
+             (!('destination' in data) || (data.destination is string && data.destination.size() < 200)) &&
+             data.timestamp is timestamp &&
+             (!('returnDeadline' in data) || (data.returnDeadline is timestamp || data.returnDeadline == null));
+    }
+
+    // Items Collection
+    match /items/{itemId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidItem(request.resource.data);
+      allow update: if isAuthenticated() && isValidItem(request.resource.data);
+      allow delete: if false; // No deletion allowed as per requirements (only logs and inventory management)
+    }
+
+    // Logs Collection
+    match /logs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidLog(request.resource.data);
+      allow update: if false; // Logs are immutable
+      allow delete: if false; // Logs are immutable
+    }
+  }
+}
