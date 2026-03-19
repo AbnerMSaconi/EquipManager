@@ -54,7 +54,7 @@ try { db.exec("ALTER TABLE logs ADD COLUMN returnDate DATETIME;"); } catch (e) {
 try { db.exec("ALTER TABLE users ADD COLUMN rf TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN username TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logs ADD COLUMN userIdentifier TEXT;"); } catch (e) {}
-
+try { db.exec("ALTER TABLE logs ADD COLUMN observations TEXT;"); } catch (e) {}
 // Seed Admin User
 const seedAdmin = () => {
   const adminRf = 'admin';
@@ -165,7 +165,7 @@ async function startServer() {
   });
 
   app.post('/api/inventory/action', authenticateToken, (req: any, res: any) => {
-    const { itemId, type, quantity, destination, returnDeadline } = req.body;
+    const { itemId, type, quantity, destination, returnDeadline, observations } = req.body;
     const item: any = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
@@ -176,9 +176,9 @@ async function startServer() {
     const userIdentifier = req.user.username || req.user.rf || req.user.email;
 
     const transaction = db.transaction(() => {
-      db.prepare('UPDATE items SET quantity = ? WHERE id = ?').run(newQty, itemId);
-      db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, returnDeadline, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(itemId, item.name, req.user.id, req.user.email || '', userIdentifier, type, quantity, destination, returnDeadline, status);
+    db.prepare('UPDATE items SET quantity = ? WHERE id = ?').run(newQty, itemId);
+    db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, returnDeadline, status, observations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(itemId, item.name, req.user.id, req.user.email || '', userIdentifier, type, quantity, destination, returnDeadline, status, observations || null);
     });
     transaction();
 
