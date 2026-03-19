@@ -1,5 +1,4 @@
 import React from 'react';
-import { auth } from '../firebase';
 import { LogOut, Package, History, User as UserIcon, ArrowLeftRight } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
