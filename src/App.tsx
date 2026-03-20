@@ -27,6 +27,12 @@ export default function App() {
     setUser(userData);
   };
 
+  const handleUserUpdate = (userData: any, token: string) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', token);
+    setUser(userData);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
@@ -37,8 +43,8 @@ export default function App() {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
-          <p className="text-zinc-500 font-medium animate-pulse">Carregando sistema...</p>
+          <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <p className="text-zinc-500 text-sm animate-pulse">Carregando...</p>
         </div>
       </div>
     );
@@ -49,7 +55,13 @@ export default function App() {
   }
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout}>
+    <Layout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      user={user}
+      onLogout={handleLogout}
+      onUserUpdate={handleUserUpdate}
+    >
       {activeTab === 'inventory' && <Inventory user={user} />}
       {activeTab === 'loans' && <Loans />}
       {activeTab === 'logs' && <Logs />}
