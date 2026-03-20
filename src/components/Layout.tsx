@@ -18,16 +18,13 @@ interface LayoutProps {
 export default function Layout({ children, activeTab, setActiveTab, user, onLogout }: LayoutProps) {
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col">
-      {/* Header */}
+      {/* Header Expandido */}
       <header className="bg-white border-b border-zinc-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-600 p-2 rounded-lg">
-              <Package className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-zinc-900 tracking-tight">EquipManager</h1>
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="logo.svg" alt="Logo EquipManager" className="h-8 w-auto" />
           </div>
-
+          <h1 className="text-xl font-bold text-zinc-900 tracking-tight">EquipManager</h1>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-zinc-100 rounded-full border border-zinc-200">
               <UserIcon className="w-4 h-4 text-zinc-500" />
@@ -44,10 +41,10 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
         </div>
       </header>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs Expandido */}
       <div className="bg-white border-b border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-8 overflow-x-auto hide-scrollbar">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <nav className="flex gap-10 overflow-x-auto hide-scrollbar align-middle">
             <button
               onClick={() => setActiveTab('inventory')}
               className={cn(
@@ -116,14 +113,14 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content Expandido */}
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
 
-      {/* Footer */}
+      {/* Footer Expandido */}
       <footer className="bg-white border-t border-zinc-200 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-zinc-500 text-sm">
+        <div className="w-full px-4 sm:px-6 lg:px-8 text-center text-zinc-500 text-sm">
           &copy; {new Date().getFullYear()} EquipManager - Controle de Equipamentos
         </div>
       </footer>

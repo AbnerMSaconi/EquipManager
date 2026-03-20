@@ -9,7 +9,7 @@ import { createServer as createViteServer } from 'vite';
 const db = new Database('inventory.db');
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-// Initialize Database (removido o CHECK rigoroso do actionType para permitir 'quebra')
+// Removida a trava CHECK(actionType IN ...) para permitir 'quebra'
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,11 +38,12 @@ db.exec(`
     quantity INTEGER NOT NULL,
     destination TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    returnDeadline DATETIME
+    returnDeadline DATETIME,
+    FOREIGN KEY(itemId) REFERENCES items(id),
+    FOREIGN KEY(userId) REFERENCES users(id)
   );
 `);
 
-// Migrations for new fields
 try { db.exec("ALTER TABLE items ADD COLUMN room TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE items ADD COLUMN cabinet TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE items ADD COLUMN shelf TEXT;"); } catch (e) {}
@@ -54,7 +55,6 @@ try { db.exec("ALTER TABLE users ADD COLUMN username TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logs ADD COLUMN userIdentifier TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logs ADD COLUMN observations TEXT;"); } catch (e) {}
 
-// Seed Admin User
 const seedAdmin = () => {
   const adminRf = 'admin';
   const adminUsername = 'admin';
@@ -76,7 +76,6 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // Middleware: Auth
   const authenticateToken = (req: any, res: any, next: any) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -89,7 +88,6 @@ async function startServer() {
     });
   };
 
-  // Auth Routes
   app.post('/api/auth/register', (req, res) => {
     const { rf, username, password } = req.body;
     try {
@@ -112,7 +110,6 @@ async function startServer() {
     res.json({ token, user: { id: user.id, rf: user.rf, username: user.username, role: user.role } });
   });
 
-  // User Management Routes
   app.get('/api/users', authenticateToken, (req: any, res: any) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
     const users = db.prepare('SELECT id, rf, username, role FROM users').all();
@@ -138,7 +135,6 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  // Inventory Routes
   app.get('/api/items', authenticateToken, (req: any, res: any) => {
     const items = db.prepare('SELECT * FROM items').all();
     res.json(items);
@@ -166,7 +162,6 @@ async function startServer() {
     const item: any = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    // Se for entrada, soma. Se for retirada ou quebra, subtrai.
     const isReduction = type === 'retirada' || type === 'quebra';
     const newQty = isReduction ? item.quantity - quantity : item.quantity + quantity;
     
@@ -185,31 +180,40 @@ async function startServer() {
     res.json({ success: true });
   });
 
-  // Loans Routes
   app.get('/api/loans', authenticateToken, (req: any, res: any) => {
     const loans = db.prepare("SELECT * FROM logs WHERE actionType = 'retirada' AND status = 'active' ORDER BY timestamp DESC").all();
     res.json(loans);
   });
 
+  // Rota de devolução atualizada para suportar QUEBRA
   app.post('/api/loans/:id/return', authenticateToken, (req: any, res: any) => {
     const logId = req.params.id;
-    const { observations } = req.body || {};
+    const { observations, isBroken } = req.body || {};
+    
     const log: any = db.prepare("SELECT * FROM logs WHERE id = ? AND status = 'active'").get(logId);
     if (!log) return res.status(404).json({ error: 'Loan not found or already returned' });
 
     const userIdentifier = req.user.username || req.user.rf || req.user.email;
 
     const transaction = db.transaction(() => {
+      // 1. Finaliza o empréstimo (marca como returned)
       db.prepare("UPDATE logs SET status = 'returned', returnDate = CURRENT_TIMESTAMP WHERE id = ?").run(logId);
-      db.prepare('UPDATE items SET quantity = quantity + ? WHERE id = ?').run(log.quantity, log.itemId);
-      db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status, observations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(log.itemId, log.itemName, req.user.id, req.user.email || '', userIdentifier, 'recebimento', log.quantity, 'Devolução de Empréstimo', 'completed', observations || null);
+      
+      if (isBroken) {
+        // 2a. SE FOI QUEBRADO: NÃO soma no estoque e lança no histórico como 'quebra'
+        db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status, observations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .run(log.itemId, log.itemName, req.user.id, req.user.email || '', userIdentifier, 'quebra', log.quantity, 'Baixa por Quebra na Devolução', 'completed', observations || null);
+      } else {
+        // 2b. SE ESTÁ OK: Soma no estoque e lança no histórico como 'recebimento' (entrada)
+        db.prepare('UPDATE items SET quantity = quantity + ? WHERE id = ?').run(log.quantity, log.itemId);
+        db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status, observations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .run(log.itemId, log.itemName, req.user.id, req.user.email || '', userIdentifier, 'recebimento', log.quantity, 'Devolução de Empréstimo', 'completed', observations || null);
+      }
     });
     transaction();
     res.json({ success: true });
   });
 
-  // Logs Routes
   app.get('/api/logs', authenticateToken, (req: any, res: any) => {
     const logs = db.prepare('SELECT * FROM logs ORDER BY timestamp DESC').all();
     res.json(logs);
