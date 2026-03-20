@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowUpRight, Calendar, User, MapPin, Clock, CheckCircle2, LayoutGrid, List, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowUpRight, Calendar, User, MapPin, Clock, CheckCircle2, LayoutGrid, List, Download, X, AlertCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Log } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -7,6 +7,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { api } from '../services/api';
 import { exportToCSV } from '../utils/export';
+import { motion, AnimatePresence } from 'motion/react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,6 +17,8 @@ export default function Loans() {
   const [loans, setLoans] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [showReturnModal, setShowReturnModal] = useState<Log | null>(null);
+  const [returnData, setReturnData] = useState({ isDamaged: false, damageDescription: '', isOperational: true });
 
   const fetchLoans = async () => {
     try {
@@ -32,10 +35,15 @@ export default function Loans() {
     fetchLoans();
   }, []);
 
-  const handleReturn = async (id: string) => {
+  const handleReturn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showReturnModal) return;
+
     try {
-      await api.post(`/loans/${id}/return`, {});
+      await api.post(`/loans/${showReturnModal.id}/return`, returnData);
       fetchLoans();
+      setShowReturnModal(null);
+      setReturnData({ isDamaged: false, damageDescription: '', isOperational: true });
     } catch (err) {
       console.error(err);
     }
@@ -182,7 +190,10 @@ export default function Loans() {
                 </div>
 
                 <button
-                  onClick={() => handleReturn(loan.id)}
+                  onClick={() => {
+                    setShowReturnModal(loan);
+                    setReturnData({ isDamaged: false, damageDescription: '', isOperational: true });
+                  }}
                   className={cn(
                     "bg-zinc-900 hover:bg-zinc-800 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all",
                     viewMode === 'list' ? "w-full md:w-auto" : "w-full mt-2"
@@ -195,6 +206,117 @@ export default function Loans() {
           })}
         </div>
       )}
+
+      {/* Return Modal */}
+      <AnimatePresence>
+        {showReturnModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-zinc-900">Confirmar Devolução</h2>
+                <button onClick={() => setShowReturnModal(null)} className="text-zinc-400 hover:text-zinc-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="px-6 py-4 bg-zinc-50 border-b border-zinc-100">
+                <p className="text-sm text-zinc-500">Equipamento:</p>
+                <p className="font-bold text-zinc-900">{showReturnModal.quantity}x {showReturnModal.itemName}</p>
+                <p className="text-xs text-zinc-400 mt-1">Responsável: {showReturnModal.userIdentifier || showReturnModal.userEmail}</p>
+              </div>
+              <form onSubmit={handleReturn} className="p-6 space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-zinc-50">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                        returnData.isDamaged ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600"
+                      )}>
+                        {returnData.isDamaged ? <ShieldAlert className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-zinc-900">Houve avaria?</p>
+                        <p className="text-xs text-zinc-500">{returnData.isDamaged ? 'Sim, o item possui danos' : 'Não, o item está íntegro'}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReturnData({ ...returnData, isDamaged: !returnData.isDamaged })}
+                      className={cn(
+                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                        returnData.isDamaged ? "bg-red-600" : "bg-zinc-200"
+                      )}
+                    >
+                      <span className={cn(
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                        returnData.isDamaged ? "translate-x-6" : "translate-x-1"
+                      )} />
+                    </button>
+                  </div>
+
+                  {returnData.isDamaged && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-700 mb-1">Descrição da Avaria</label>
+                        <textarea
+                          required
+                          rows={3}
+                          placeholder="Descreva o dano ocorrido..."
+                          value={returnData.damageDescription}
+                          onChange={(e) => setReturnData({ ...returnData, damageDescription: e.target.value })}
+                          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-zinc-50">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-lg flex items-center justify-center",
+                            returnData.isOperational ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
+                          )}>
+                            {returnData.isOperational ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-zinc-900">Ainda está operante?</p>
+                            <p className="text-xs text-zinc-500">{returnData.isOperational ? 'Sim, pode ser usado' : 'Não, precisa de reparo/descarte'}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setReturnData({ ...returnData, isOperational: !returnData.isOperational })}
+                          className={cn(
+                            "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+                            returnData.isOperational ? "bg-emerald-600" : "bg-zinc-200"
+                          )}
+                        >
+                          <span className={cn(
+                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                            returnData.isOperational ? "translate-x-6" : "translate-x-1"
+                          )} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-3 rounded-xl shadow-lg shadow-zinc-100 transition-all"
+                >
+                  Confirmar Devolução
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

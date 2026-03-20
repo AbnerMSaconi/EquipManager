@@ -5,11 +5,12 @@ import Inventory from './components/Inventory';
 import Logs from './components/Logs';
 import Loans from './components/Loans';
 import Users from './components/Users';
+import Expenses from './components/Expenses';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'logs' | 'loans' | 'users'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'logs' | 'loans' | 'users' | 'expenses'>('inventory');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -52,6 +53,7 @@ export default function App() {
       {activeTab === 'inventory' && <Inventory user={user} />}
       {activeTab === 'loans' && <Loans />}
       {activeTab === 'logs' && <Logs />}
+      {activeTab === 'expenses' && user?.role === 'admin' && <Expenses />}
       {activeTab === 'users' && user?.role === 'admin' && <Users />}
     </Layout>
   );

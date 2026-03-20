@@ -16,6 +16,8 @@ export interface Item {
   cabinet?: string;
   shelf?: string;
   imageUrl?: string;
+  minQuantity?: number;
+  unitValue?: number;
 }
 
 export interface Log {
@@ -25,11 +27,43 @@ export interface Log {
   userId: string;
   userEmail: string;
   userIdentifier?: string;
-  actionType: 'retirada' | 'recebimento';
+  actionType: 'retirada' | 'recebimento' | 'quebra' | 'avaria';
   quantity: number;
   destination?: string;
   timestamp: any; // Firestore Timestamp
   returnDeadline?: any; // Firestore Timestamp
-  status?: 'completed' | 'active' | 'returned';
+  status?: 'completed' | 'active' | 'returned' | 'broken';
   returnDate?: any;
+  isDamaged?: boolean;
+  damageDescription?: string;
+  isOperational?: boolean;
+  unitValue?: number;
+}
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string;
+    email?: string;
+    emailVerified?: boolean;
+    isAnonymous?: boolean;
+    tenantId?: string | null;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
 }

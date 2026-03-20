@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, PackagePlus, Search, Package, Calendar, MapPin, X, Download, LayoutGrid, List, Image as ImageIcon, Trash2, QrCode, ScanLine } from 'lucide-react';
+import { Plus, Minus, PackagePlus, Search, Package, Calendar, MapPin, X, Download, LayoutGrid, List, Image as ImageIcon, Trash2, QrCode, ScanLine, AlertTriangle, Hammer, DollarSign } from 'lucide-react';
 import { Item, User } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -26,11 +26,13 @@ export default function Inventory({ user }: InventoryProps) {
   const [showActionModal, setShowActionModal] = useState<{ type: 'retirada' | 'recebimento', item: Item } | null>(null);
   const [showQRModal, setShowQRModal] = useState<Item | null>(null);
   const [showScannerModal, setShowScannerModal] = useState(false);
+  const [showBreakageModal, setShowBreakageModal] = useState<Item | null>(null);
   const [scannedItem, setScannedItem] = useState<Item | null>(null);
 
   // Form states
-  const [newItem, setNewItem] = useState({ name: '', description: '', quantity: 0, category: '', room: '', cabinet: '', shelf: '', imageUrl: '' });
-  const [actionData, setActionData] = useState({ quantity: 1, destination: '', returnDeadline: '' });
+  const [newItem, setNewItem] = useState({ name: '', description: '', quantity: 0, category: '', room: '', cabinet: '', shelf: '', imageUrl: '', minQuantity: '', unitValue: '' });
+  const [actionData, setActionData] = useState({ quantity: 1, destination: '', returnDeadline: '', unitValue: '' });
+  const [breakageData, setBreakageData] = useState({ quantity: 1, description: '' });
 
   const fetchItems = async () => {
     try {
@@ -63,11 +65,32 @@ export default function Inventory({ user }: InventoryProps) {
     try {
       await api.post('/items', {
         ...newItem,
-        quantity: Number(newItem.quantity)
+        quantity: Number(newItem.quantity),
+        minQuantity: newItem.minQuantity ? Number(newItem.minQuantity) : null,
+        unitValue: newItem.unitValue ? Number(newItem.unitValue) : null
       });
       fetchItems();
       setShowAddModal(false);
-      setNewItem({ name: '', description: '', quantity: 0, category: '', room: '', cabinet: '', shelf: '', imageUrl: '' });
+      setNewItem({ name: '', description: '', quantity: 0, category: '', room: '', cabinet: '', shelf: '', imageUrl: '', minQuantity: '', unitValue: '' });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBreakage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showBreakageModal) return;
+
+    try {
+      await api.post('/inventory/breakage', {
+        itemId: showBreakageModal.id,
+        quantity: Number(breakageData.quantity),
+        description: breakageData.description
+      });
+
+      fetchItems();
+      setShowBreakageModal(null);
+      setBreakageData({ quantity: 1, description: '' });
     } catch (err) {
       console.error(err);
     }
@@ -86,12 +109,13 @@ export default function Inventory({ user }: InventoryProps) {
         type,
         quantity: qty,
         destination: type === 'retirada' ? actionData.destination : 'Reposição de Estoque',
-        returnDeadline: actionData.returnDeadline || null
+        returnDeadline: actionData.returnDeadline || null,
+        unitValue: actionData.unitValue ? Number(actionData.unitValue) : null
       });
 
       fetchItems();
       setShowActionModal(null);
-      setActionData({ quantity: 1, destination: '', returnDeadline: '' });
+      setActionData({ quantity: 1, destination: '', returnDeadline: '', unitValue: '' });
     } catch (err) {
       console.error(err);
     }
@@ -211,27 +235,45 @@ export default function Inventory({ user }: InventoryProps) {
               <div className={cn("flex-1", viewMode === 'list' && "w-full")}>
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-1 rounded">
-                      {item.category || 'Geral'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-1 rounded">
+                        {item.category || 'Geral'}
+                      </span>
+                      {item.minQuantity !== null && item.quantity <= item.minQuantity && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 px-2 py-1 rounded animate-pulse">
+                          <AlertTriangle className="w-3 h-3" /> Estoque Crítico
+                        </span>
+                      )}
+                    </div>
                     <h3 className="text-lg font-bold text-zinc-900 mt-2">{item.name}</h3>
                     <p className="text-sm text-zinc-500 line-clamp-2 mt-1">{item.description}</p>
-                    {(item.room || item.cabinet || item.shelf) && (
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-2">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {item.room && <span>Sala: {item.room}</span>}
-                        {item.cabinet && <span>• Armário: {item.cabinet}</span>}
-                        {item.shelf && <span>• Prat: {item.shelf}</span>}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-3 mt-2">
+                      {(item.room || item.cabinet || item.shelf) && (
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {item.room && <span>Sala: {item.room}</span>}
+                          {item.cabinet && <span>• Armário: {item.cabinet}</span>}
+                          {item.shelf && <span>• Prat: {item.shelf}</span>}
+                        </div>
+                      )}
+                      {item.unitValue && (
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          <span>R$ {item.unitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-black text-zinc-900">{item.quantity}</span>
+                    <span className={cn(
+                      "text-2xl font-black",
+                      (item.minQuantity !== null && item.quantity <= item.minQuantity) ? "text-red-600" : "text-zinc-900"
+                    )}>{item.quantity}</span>
                     <p className="text-[10px] text-zinc-400 uppercase font-bold">Unidades</p>
                   </div>
                 </div>
 
-                <div className={cn("grid grid-cols-3 gap-3", viewMode === 'grid' ? "mt-6" : "mt-4 sm:max-w-md sm:ml-auto")}>
+                <div className={cn("grid grid-cols-2 sm:grid-cols-4 gap-3", viewMode === 'grid' ? "mt-6" : "mt-4 sm:max-w-xl sm:ml-auto")}>
                   <button
                     onClick={() => setShowActionModal({ type: 'recebimento', item })}
                     className="flex items-center justify-center gap-2 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg font-semibold text-sm transition-colors"
@@ -244,6 +286,13 @@ export default function Inventory({ user }: InventoryProps) {
                     className="flex items-center justify-center gap-2 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg font-semibold text-sm transition-colors disabled:opacity-50"
                   >
                     <Minus className="w-4 h-4" /> Saída
+                  </button>
+                  <button
+                    onClick={() => setShowBreakageModal(item)}
+                    disabled={item.quantity === 0}
+                    className="flex items-center justify-center gap-2 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50"
+                  >
+                    <Hammer className="w-4 h-4" /> Quebra
                   </button>
                   <button
                     onClick={() => setShowQRModal(item)}
@@ -312,6 +361,31 @@ export default function Inventory({ user }: InventoryProps) {
                       min="0"
                       value={newItem.quantity}
                       onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">Qtd. Mínima (Alerta)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Opcional"
+                      value={newItem.minQuantity}
+                      onChange={(e) => setNewItem({ ...newItem, minQuantity: e.target.value })}
+                      className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">Valor Unitário (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Opcional"
+                      value={newItem.unitValue}
+                      onChange={(e) => setNewItem({ ...newItem, unitValue: e.target.value })}
                       className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
                   </div>
@@ -460,6 +534,29 @@ export default function Inventory({ user }: InventoryProps) {
                   </>
                 )}
 
+                {showActionModal.type === 'recebimento' && (
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1 flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" /> Novo Valor Unitário (Opcional)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder={showActionModal.item.unitValue ? `Atual: ${showActionModal.item.unitValue.toFixed(2)}` : "0.00"}
+                        value={actionData.unitValue}
+                        onChange={(e) => setActionData({ ...actionData, unitValue: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Deixe em branco para manter o valor atual. Se preenchido, o valor do item será atualizado.
+                    </p>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   className={cn(
@@ -470,6 +567,65 @@ export default function Inventory({ user }: InventoryProps) {
                   )}
                 >
                   Confirmar {showActionModal.type === 'recebimento' ? 'Entrada' : 'Retirada'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Breakage Modal */}
+      <AnimatePresence>
+        {showBreakageModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+                  <Hammer className="w-5 h-5 text-red-600" /> Registrar Quebra
+                </h2>
+                <button onClick={() => setShowBreakageModal(null)} className="text-zinc-400 hover:text-zinc-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="px-6 py-4 bg-red-50 border-b border-red-100">
+                <p className="text-sm text-red-600 font-medium">Equipamento:</p>
+                <p className="font-bold text-zinc-900">{showBreakageModal.name}</p>
+                <p className="text-xs text-zinc-500 mt-1">Isso reduzirá a quantidade operacional em estoque.</p>
+              </div>
+              <form onSubmit={handleBreakage} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Quantidade Quebrada</label>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    max={showBreakageModal.quantity}
+                    value={breakageData.quantity}
+                    onChange={(e) => setBreakageData({ ...breakageData, quantity: Number(e.target.value) })}
+                    className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1">Descrição da Avaria</label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Descreva o que aconteceu..."
+                    value={breakageData.description}
+                    onChange={(e) => setBreakageData({ ...breakageData, description: e.target.value })}
+                    className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-red-100 transition-all mt-4"
+                >
+                  Confirmar Quebra
                 </button>
               </form>
             </motion.div>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { LogOut, Package, History, User as UserIcon, ArrowLeftRight } from 'lucide-react';
+import { auth } from '../firebase';
+import { LogOut, Package, History, User as UserIcon, ArrowLeftRight, DollarSign } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -9,8 +10,8 @@ function cn(...inputs: ClassValue[]) {
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'inventory' | 'logs' | 'loans' | 'users';
-  setActiveTab: (tab: 'inventory' | 'logs' | 'loans' | 'users') => void;
+  activeTab: 'inventory' | 'logs' | 'loans' | 'users' | 'expenses';
+  setActiveTab: (tab: 'inventory' | 'logs' | 'loans' | 'users' | 'expenses') => void;
   user: any;
   onLogout: () => void;
 }
@@ -85,18 +86,32 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
               Logs de Movimentação
             </button>
             {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTab('users')}
-                className={cn(
-                  "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
-                  activeTab === 'users'
-                    ? "border-emerald-600 text-emerald-600"
-                    : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
-                )}
-              >
-                <UserIcon className="w-4 h-4" />
-                Usuários
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab('expenses')}
+                  className={cn(
+                    "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
+                    activeTab === 'expenses'
+                      ? "border-emerald-600 text-emerald-600"
+                      : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
+                  )}
+                >
+                  <DollarSign className="w-4 h-4" />
+                  Compras
+                </button>
+                <button
+                  onClick={() => setActiveTab('users')}
+                  className={cn(
+                    "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
+                    activeTab === 'users'
+                      ? "border-emerald-600 text-emerald-600"
+                      : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
+                  )}
+                >
+                  <UserIcon className="w-4 h-4" />
+                  Usuários
+                </button>
+              </>
             )}
           </nav>
         </div>

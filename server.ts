@@ -25,7 +25,9 @@ db.exec(`
     name TEXT NOT NULL,
     description TEXT,
     quantity INTEGER DEFAULT 0,
-    category TEXT
+    category TEXT,
+    minQuantity INTEGER,
+    unitValue REAL
   );
 
   CREATE TABLE IF NOT EXISTS logs (
@@ -34,27 +36,80 @@ db.exec(`
     itemName TEXT NOT NULL,
     userId INTEGER NOT NULL,
     userEmail TEXT NOT NULL,
-    actionType TEXT CHECK(actionType IN ('retirada', 'recebimento')) NOT NULL,
+    actionType TEXT NOT NULL,
     quantity INTEGER NOT NULL,
     destination TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     returnDeadline DATETIME,
+    status TEXT DEFAULT 'completed',
+    returnDate DATETIME,
+    userIdentifier TEXT,
+    isDamaged BOOLEAN DEFAULT 0,
+    damageDescription TEXT,
+    isOperational BOOLEAN DEFAULT 1,
+    unitValue REAL,
     FOREIGN KEY(itemId) REFERENCES items(id),
     FOREIGN KEY(userId) REFERENCES users(id)
   );
 `);
+
+// Migration to fix logs table constraint if it exists
+try {
+  const tableInfo: any = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='logs'").get();
+  const sql = tableInfo?.sql || "";
+  if (sql.toUpperCase().includes("CHECK") || sql.toUpperCase().includes("ACTIONTYPE IN")) {
+    console.log("Migrating logs table to remove CHECK constraint...");
+    db.transaction(() => {
+      db.exec("ALTER TABLE logs RENAME TO logs_old;");
+      db.exec(`
+        CREATE TABLE logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          itemId INTEGER NOT NULL,
+          itemName TEXT NOT NULL,
+          userId INTEGER NOT NULL,
+          userEmail TEXT NOT NULL,
+          actionType TEXT NOT NULL,
+          quantity INTEGER NOT NULL,
+          destination TEXT,
+          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+          returnDeadline DATETIME,
+          status TEXT DEFAULT 'completed',
+          returnDate DATETIME,
+          userIdentifier TEXT,
+          isDamaged BOOLEAN DEFAULT 0,
+          damageDescription TEXT,
+          isOperational BOOLEAN DEFAULT 1,
+          unitValue REAL,
+          FOREIGN KEY(itemId) REFERENCES items(id),
+          FOREIGN KEY(userId) REFERENCES users(id)
+        );
+      `);
+      db.exec("INSERT INTO logs SELECT * FROM logs_old;");
+      db.exec("DROP TABLE logs_old;");
+    })();
+    console.log("Logs table migration completed.");
+  }
+} catch (e) {
+  console.error("Error during logs table migration:", e);
+}
 
 // Migrations for new fields
 try { db.exec("ALTER TABLE items ADD COLUMN room TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE items ADD COLUMN cabinet TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE items ADD COLUMN shelf TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE items ADD COLUMN imageUrl TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE items ADD COLUMN minQuantity INTEGER;"); } catch (e) {}
+try { db.exec("ALTER TABLE items ADD COLUMN unitValue REAL;"); } catch (e) {}
 try { db.exec("ALTER TABLE logs ADD COLUMN status TEXT DEFAULT 'completed';"); } catch (e) {}
 try { db.exec("ALTER TABLE logs ADD COLUMN returnDate DATETIME;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN rf TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE users ADD COLUMN username TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE logs ADD COLUMN userIdentifier TEXT;"); } catch (e) {}
-try { db.exec("ALTER TABLE logs ADD COLUMN observations TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE logs ADD COLUMN isDamaged BOOLEAN DEFAULT 0;"); } catch (e) {}
+try { db.exec("ALTER TABLE logs ADD COLUMN damageDescription TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE logs ADD COLUMN isOperational BOOLEAN DEFAULT 1;"); } catch (e) {}
+try { db.exec("ALTER TABLE logs ADD COLUMN unitValue REAL;"); } catch (e) {}
+
 // Seed Admin User
 const seedAdmin = () => {
   const adminRf = 'admin';
@@ -147,13 +202,13 @@ async function startServer() {
   });
 
   app.post('/api/items', authenticateToken, (req: any, res: any) => {
-    const { name, description, quantity, category, room, cabinet, shelf, imageUrl } = req.body;
-    const result = db.prepare('INSERT INTO items (name, description, quantity, category, room, cabinet, shelf, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(name, description, quantity, category, room, cabinet, shelf, imageUrl);
+    const { name, description, quantity, category, room, cabinet, shelf, imageUrl, minQuantity, unitValue } = req.body;
+    const result = db.prepare('INSERT INTO items (name, description, quantity, category, room, cabinet, shelf, imageUrl, minQuantity, unitValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(name, description, quantity, category, room, cabinet, shelf, imageUrl, minQuantity, unitValue);
     
     // Log initial creation
     const userIdentifier = req.user.username || req.user.rf || req.user.email;
-    db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(result.lastInsertRowid, name, req.user.id, req.user.email || '', userIdentifier, 'recebimento', quantity, 'Cadastro Inicial', 'completed');
+    db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status, unitValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(result.lastInsertRowid, name, req.user.id, req.user.email || '', userIdentifier, 'recebimento', quantity, 'Cadastro Inicial', 'completed', unitValue);
 
     res.json({ id: result.lastInsertRowid });
   });
@@ -165,7 +220,7 @@ async function startServer() {
   });
 
   app.post('/api/inventory/action', authenticateToken, (req: any, res: any) => {
-    const { itemId, type, quantity, destination, returnDeadline, observations } = req.body;
+    const { itemId, type, quantity, destination, returnDeadline, unitValue } = req.body;
     const item: any = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId);
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
@@ -174,11 +229,41 @@ async function startServer() {
 
     const status = (type === 'retirada' && returnDeadline) ? 'active' : 'completed';
     const userIdentifier = req.user.username || req.user.rf || req.user.email;
+    
+    // If a new unitValue is provided during 'recebimento', use it. Otherwise, keep the old one.
+    const finalUnitValue = (type === 'recebimento' && unitValue !== undefined && unitValue !== null && unitValue !== '') 
+      ? Number(unitValue) 
+      : item.unitValue;
 
     const transaction = db.transaction(() => {
-    db.prepare('UPDATE items SET quantity = ? WHERE id = ?').run(newQty, itemId);
-    db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, returnDeadline, status, observations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(itemId, item.name, req.user.id, req.user.email || '', userIdentifier, type, quantity, destination, returnDeadline, status, observations || null);
+      if (type === 'recebimento' && finalUnitValue !== item.unitValue) {
+        db.prepare('UPDATE items SET quantity = ?, unitValue = ? WHERE id = ?').run(newQty, finalUnitValue, itemId);
+      } else {
+        db.prepare('UPDATE items SET quantity = ? WHERE id = ?').run(newQty, itemId);
+      }
+      db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, returnDeadline, status, unitValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(itemId, item.name, req.user.id, req.user.email || '', userIdentifier, type, quantity, destination, returnDeadline, status, finalUnitValue);
+    });
+    transaction();
+
+    res.json({ success: true });
+  });
+
+  // New endpoint for breakage
+  app.post('/api/inventory/breakage', authenticateToken, (req: any, res: any) => {
+    const { itemId, quantity, description } = req.body;
+    const item: any = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    const newQty = item.quantity - quantity;
+    if (newQty < 0) return res.status(400).json({ error: 'Insufficient stock' });
+
+    const userIdentifier = req.user.username || req.user.rf || req.user.email;
+
+    const transaction = db.transaction(() => {
+      db.prepare('UPDATE items SET quantity = ? WHERE id = ?').run(newQty, itemId);
+      db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status, isDamaged, damageDescription, isOperational, unitValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(itemId, item.name, req.user.id, req.user.email || '', userIdentifier, 'quebra', quantity, 'Equipamento Quebrado', 'broken', 1, description, 0, item.unitValue);
     });
     transaction();
 
@@ -193,19 +278,26 @@ async function startServer() {
 
   app.post('/api/loans/:id/return', authenticateToken, (req: any, res: any) => {
     const logId = req.params.id;
+    const { isDamaged, damageDescription, isOperational } = req.body;
     const log: any = db.prepare("SELECT * FROM logs WHERE id = ? AND status = 'active'").get(logId);
     if (!log) return res.status(404).json({ error: 'Loan not found or already returned' });
 
+    const item: any = db.prepare('SELECT * FROM items WHERE id = ?').get(log.itemId);
     const userIdentifier = req.user.username || req.user.rf || req.user.email;
 
     const transaction = db.transaction(() => {
       // Mark loan as returned
-      db.prepare("UPDATE logs SET status = 'returned', returnDate = CURRENT_TIMESTAMP WHERE id = ?").run(logId);
-      // Increment inventory
-      db.prepare('UPDATE items SET quantity = quantity + ? WHERE id = ?').run(log.quantity, log.itemId);
+      db.prepare("UPDATE logs SET status = 'returned', returnDate = CURRENT_TIMESTAMP, isDamaged = ?, damageDescription = ?, isOperational = ? WHERE id = ?")
+        .run(isDamaged ? 1 : 0, damageDescription || null, isOperational ? 1 : 0, logId);
+      
+      // Increment inventory ONLY if it's still operational
+      if (isOperational) {
+        db.prepare('UPDATE items SET quantity = quantity + ? WHERE id = ?').run(log.quantity, log.itemId);
+      }
+      
       // Create a new log for the return
-      db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(log.itemId, log.itemName, req.user.id, req.user.email || '', userIdentifier, 'recebimento', log.quantity, 'Devolução de Empréstimo', 'completed');
+      db.prepare('INSERT INTO logs (itemId, itemName, userId, userEmail, userIdentifier, actionType, quantity, destination, status, isDamaged, damageDescription, isOperational, unitValue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(log.itemId, log.itemName, req.user.id, req.user.email || '', userIdentifier, 'recebimento', log.quantity, 'Devolução de Empréstimo', 'completed', isDamaged ? 1 : 0, damageDescription || null, isOperational ? 1 : 0, item.unitValue);
     });
     transaction();
     res.json({ success: true });
@@ -215,6 +307,29 @@ async function startServer() {
   app.get('/api/logs', authenticateToken, (req: any, res: any) => {
     const logs = db.prepare('SELECT * FROM logs ORDER BY timestamp DESC').all();
     res.json(logs);
+  });
+
+  // Expenses Route
+  app.get('/api/expenses', authenticateToken, (req: any, res: any) => {
+    const { startDate, endDate } = req.query;
+    // Only count 'recebimento' (acquisitions/purchases) as expenses.
+    // Exclude 'Devolução de Empréstimo' since returning a loaned item is not a new purchase.
+    let query = "SELECT * FROM logs WHERE actionType = 'recebimento' AND (destination IS NULL OR destination != 'Devolução de Empréstimo') AND unitValue IS NOT NULL";
+    const params: any[] = [];
+
+    if (startDate && endDate) {
+      query += ' AND timestamp BETWEEN ? AND ?';
+      params.push(`${startDate} 00:00:00`, `${endDate} 23:59:59`);
+    }
+
+    query += ' ORDER BY timestamp DESC';
+    const logs = db.prepare(query).all(...params);
+    res.json(logs);
+  });
+
+  // API 404 Handler - Must be after all API routes but before SPA fallback
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });
 
   // Vite middleware for development
@@ -231,6 +346,12 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  // Global Error Handler
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error(err.stack);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
