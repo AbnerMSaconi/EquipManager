@@ -174,6 +174,7 @@ export default function Inventory({ user }: InventoryProps) {
 
   const [newItem, setNewItem] = useState<ItemFormData>({ ...emptyItem });
   const [editForm, setEditForm] = useState<ItemFormData>({ ...emptyItem });
+  const [registerExpense, setRegisterExpense] = useState(true);
   const [actionData, setActionData] = useState({
     quantity: 1, destination: '', returnDeadline: '',
     unitValue: '', observations: '', hasDamage: false,
@@ -227,13 +228,56 @@ export default function Inventory({ user }: InventoryProps) {
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/items', {
-        ...newItem, quantity: Number(newItem.quantity),
-        minQuantity: newItem.minQuantity ? Number(newItem.minQuantity) : null,
-        unitValue: newItem.unitValue ? Number(newItem.unitValue) : null,
-      });
-      fetchItems(); setShowAddModal(false); setNewItem({ ...emptyItem });
-    } catch (err) { console.error(err); }
+      const qty = Number(newItem.quantity);
+      const uv = newItem.unitValue ? Number(newItem.unitValue) : null;
+
+      if (registerExpense && qty > 0 && uv !== null) {
+        // Fluxo 1: Registrar como despesa/compra
+        const createdItem = await api.post('/items', {
+          ...newItem,
+          quantity: 0,
+          minQuantity: newItem.minQuantity ? Number(newItem.minQuantity) : null,
+          unitValue: null, 
+        });
+
+        await api.post('/inventory/action', {
+          itemId: createdItem.id,
+          type: 'recebimento',
+          quantity: qty,
+          destination: 'Estoque Inicial (Compra)',
+          unitValue: uv,
+          observations: 'Registro automático de compra na criação do item'
+        });
+      } else {
+        // Fluxo 2: NÃO registrar como despesa
+        // Enviamos unitValue=null para o cadastro, assim o servidor não loga como gasto financeiro
+        // e em seguida, se precisar salvar no item para referência, atualizamos o item.
+        const createdItem = await api.post('/items', {
+          ...newItem,
+          quantity: qty,
+          minQuantity: newItem.minQuantity ? Number(newItem.minQuantity) : null,
+          unitValue: null, // Impede de aparecer no monitoramento de compras
+        });
+
+        // Se o usuário digitou um valor, mas desmarcou a caixinha, nós guardamos o valor 
+        // apenas no cadastro do item (para referência visual), mas sem logar a compra.
+        if (uv !== null) {
+          await api.put(`/items/${createdItem.id}`, {
+             ...newItem,
+             quantity: qty, // mantém a quantidade que foi salva
+             minQuantity: newItem.minQuantity ? Number(newItem.minQuantity) : null,
+             unitValue: uv
+          });
+        }
+      }
+
+      fetchItems();
+      setShowAddModal(false);
+      setNewItem({ ...emptyItem });
+      setRegisterExpense(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleEditItem = async (e: React.FormEvent) => {
@@ -275,9 +319,14 @@ export default function Inventory({ user }: InventoryProps) {
     setDeleting(true);
     try {
       await api.delete(`/items/${id}`);
-      fetchItems(); setDeleteTarget(null);
-    } catch { alert('Erro ao excluir.'); }
-    finally { setDeleting(false); }
+      setDeleteTarget(null);
+      fetchItems();
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao excluir o item. Verifique a conexão com o servidor.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleExport = () => {
@@ -562,7 +611,29 @@ export default function Inventory({ user }: InventoryProps) {
                     onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })}
                     className="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
                 </div>
+                
                 <ItemFormFields data={newItem} setData={setNewItem} />
+
+                {/* CAIXA DE SELEÇÃO OPCIONAL */}
+                {Number(newItem.quantity) > 0 && newItem.unitValue && Number(newItem.unitValue) > 0 ? (
+                  <label className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors">
+                    <div className="flex items-center h-5 mt-0.5">
+                      <input 
+                        type="checkbox" 
+                        checked={registerExpense}
+                        onChange={(e) => setRegisterExpense(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-zinc-300 rounded focus:ring-blue-500" 
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-blue-900">Registrar como compra</span>
+                      <span className="text-xs text-blue-700 leading-relaxed mt-0.5">
+                        Lança <strong>R$ {(Number(newItem.unitValue) * Number(newItem.quantity)).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong> no monitoramento de despesas.
+                      </span>
+                    </div>
+                  </label>
+                ) : null}
+
                 <button type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors">
                   <PackagePlus className="w-4 h-4" /> Cadastrar Item
@@ -693,7 +764,7 @@ export default function Inventory({ user }: InventoryProps) {
                   'w-full text-white font-bold py-3 rounded-xl text-sm transition-all',
                   showActionModal.type === 'recebimento' ? 'bg-blue-600 hover:bg-blue-700'
                     : showActionModal.type === 'quebra' ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-zinc-900 hover:bg-zinc-800'
+                      : 'bg-zinc-900 hover:bg-zinc-800'
                 )}>
                   Confirmar
                 </button>
@@ -810,7 +881,7 @@ export default function Inventory({ user }: InventoryProps) {
                 <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 rounded-xl">
                   <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-red-700 leading-relaxed">
-                    Esta acao e permanente e irreversivel. O historico nos logs sera mantido.
+                    Esta ação é permanente e irreversível. Todo o histórico e movimentações deste item também serão apagados.
                   </p>
                 </div>
                 <div className="flex gap-3">
