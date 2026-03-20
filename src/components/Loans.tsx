@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { api } from '../services/api';
+import Pagination, { usePagination, type PageSize } from './Pagination';
 import { motion, AnimatePresence } from 'motion/react';
 
 function cn(...inputs: ClassValue[]) {
@@ -18,6 +19,8 @@ export default function Loans() {
   const [loading, setLoading] = useState(true);
   const [returnModal, setReturnModal] = useState<Log | null>(null);
   const [returnData, setReturnData] = useState({ hasDamage: false, isBroken: false, observations: '' });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(20);
 
   const fetchLoans = async () => {
     try {
@@ -44,6 +47,7 @@ export default function Loans() {
   };
 
   const overdueCount = loans.filter(l => l.returnDeadline && new Date(l.returnDeadline) < new Date()).length;
+  const { paginated: pagedLoans } = usePagination(loans, page, pageSize);
 
   return (
     <div className="space-y-5">
@@ -80,7 +84,7 @@ export default function Loans() {
       ) : (
         <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
           <div className="divide-y divide-zinc-100">
-            {loans.map((loan) => {
+            {pagedLoans.map((loan) => {
               const isOverdue = loan.returnDeadline && new Date(loan.returnDeadline) < new Date();
               return (
                 <div key={loan.id} className={cn(
@@ -146,6 +150,17 @@ export default function Loans() {
             })}
           </div>
         </div>
+      )}
+
+      {/* Pagination */}
+      {loans.length > 0 && (
+        <Pagination
+          total={loans.length}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
+        />
       )}
 
       {/* Return Modal */}
