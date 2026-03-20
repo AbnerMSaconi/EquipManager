@@ -61,14 +61,14 @@ export default function Logs() {
       <div className="bg-white p-3 sm:p-4 rounded-2xl border border-zinc-200 flex flex-col xl:flex-row gap-3 items-center">
         <div className="flex bg-zinc-100 p-1 rounded-xl w-full xl:w-auto overflow-x-auto hide-scrollbar snap-x">
           <button onClick={() => setFilterType('all')} className={cn("px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap snap-start", filterType === 'all' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500")}>Todas</button>
-          <button onClick={() => setFilterType('recebimento')} className={cn("px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap snap-start", filterType === 'recebimento' ? "bg-white text-emerald-700 shadow-sm" : "text-zinc-500")}>Entradas</button>
+          <button onClick={() => setFilterType('recebimento')} className={cn("px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap snap-start", filterType === 'recebimento' ? "bg-white text-blue-700 shadow-sm" : "text-zinc-500")}>Entradas</button>
           <button onClick={() => setFilterType('retirada')} className={cn("px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap snap-start", filterType === 'retirada' ? "bg-white text-amber-700 shadow-sm" : "text-zinc-500")}>Saídas</button>
           <button onClick={() => setFilterType('quebra')} className={cn("px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap snap-start", filterType === 'quebra' ? "bg-white text-red-700 shadow-sm" : "text-zinc-500")}>Quebras</button>
         </div>
 
         <div className="relative w-full xl:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-          <input type="text" placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-200 outline-none" />
+          <input type="text" placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none" />
         </div>
 
         <button onClick={handleExport} className="w-full xl:w-auto bg-white border border-zinc-200 text-zinc-700 px-6 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2">
@@ -77,7 +77,7 @@ export default function Logs() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
       ) : filteredLogs.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-zinc-300">
           <Filter className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
@@ -94,7 +94,7 @@ export default function Logs() {
               return (
                 <div key={log.id} className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
                   <div className="flex justify-between items-start mb-3">
-                    <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase", isRec ? "bg-emerald-100 text-emerald-700" : isQuebra ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>
+                    <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase", isRec ? "bg-blue-100 text-blue-700" : isQuebra ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>
                       {isRec ? <ArrowDownRight className="w-3 h-3" /> : isQuebra ? <Wrench className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                       {isRec ? 'Entrada' : isQuebra ? 'Quebra' : 'Saída'}
                     </span>
@@ -136,7 +136,7 @@ export default function Logs() {
                   return (
                     <tr key={log.id} className="hover:bg-zinc-50">
                       <td className="p-4">
-                        <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold uppercase", isRec ? "bg-emerald-100 text-emerald-700" : isQuebra ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>
+                        <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold uppercase", isRec ? "bg-blue-100 text-blue-700" : isQuebra ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>
                           {isRec ? <ArrowDownRight className="w-3.5 h-3.5" /> : isQuebra ? <Wrench className="w-3.5 h-3.5" /> : <ArrowUpRight className="w-3.5 h-3.5" />}
                           {isRec ? 'Entrada' : isQuebra ? 'Quebra' : 'Saída'}
                         </span>

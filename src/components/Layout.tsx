@@ -50,7 +50,7 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
               className={cn(
                 "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
                 activeTab === 'inventory'
-                  ? "border-emerald-600 text-emerald-600"
+                  ? "border-blue-600 text-blue-600"
                   : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
               )}
             >
@@ -62,7 +62,7 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
               className={cn(
                 "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
                 activeTab === 'loans'
-                  ? "border-emerald-600 text-emerald-600"
+                  ? "border-blue-600 text-blue-600"
                   : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
               )}
             >
@@ -74,7 +74,7 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
               className={cn(
                 "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
                 activeTab === 'logs'
-                  ? "border-emerald-600 text-emerald-600"
+                  ? "border-blue-600 text-blue-600"
                   : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
               )}
             >
@@ -88,7 +88,7 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
                   className={cn(
                     "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
                     activeTab === 'users'
-                      ? "border-emerald-600 text-emerald-600"
+                      ? "border-blue-600 text-blue-600"
                       : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
                   )}
                 >
@@ -100,7 +100,7 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
                   className={cn(
                     "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
                     activeTab === 'expenses'
-                      ? "border-emerald-600 text-emerald-600"
+                      ? "border-blue-600 text-blue-600"
                       : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
                   )}
                 >

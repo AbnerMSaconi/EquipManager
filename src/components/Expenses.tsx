@@ -71,7 +71,7 @@ export default function Expenses() {
         <h2 className="text-xl font-bold text-zinc-900">Monitoramento de Compras</h2>
         <button
           onClick={handleExport}
-          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-100 transition-all"
         >
           <Download className="w-5 h-5" /> Gerar Relatório
         </button>
@@ -80,7 +80,7 @@ export default function Expenses() {
       {/* Filters */}
       <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-zinc-900 font-bold mb-2">
-          <Filter className="w-5 h-5 text-emerald-600" />
+          <Filter className="w-5 h-5 text-blue-600" />
           Filtros de Período
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -90,7 +90,7 @@ export default function Expenses() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             />
           </div>
           <div>
@@ -99,7 +99,7 @@ export default function Expenses() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
             />
           </div>
           <div>
@@ -111,7 +111,7 @@ export default function Expenses() {
                 placeholder="Filtrar resultados..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                className="w-full pl-9 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
           </div>
@@ -122,8 +122,8 @@ export default function Expenses() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-blue-600" />
             </div>
             <span className="text-sm font-bold text-zinc-500 uppercase">Total do Período</span>
           </div>
@@ -158,7 +158,7 @@ export default function Expenses() {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center">
-                    <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
+                    <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : filteredLogs.length === 0 ? (

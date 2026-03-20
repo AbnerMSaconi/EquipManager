@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import { Package, LogIn, UserPlus, AlertCircle, Link } from 'lucide-react';
 import { motion } from 'motion/react';
 import { api } from '../services/api';
 
@@ -46,9 +46,7 @@ export default function Login({ onLogin }: LoginProps) {
         className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-zinc-200 p-8"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-emerald-600 p-3 rounded-xl mb-4 shadow-lg shadow-emerald-200">
-            <Package className="w-8 h-8 text-white" />
-          </div>
+           <img src="logo.svg" alt="Logo EquipManager" className="h-8 w-auto" />
           <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">EquipManager</h1>
           <p className="text-zinc-500 text-sm mt-1">Gerenciamento Inteligente de Equipamentos</p>
         </div>
@@ -62,7 +60,7 @@ export default function Login({ onLogin }: LoginProps) {
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 placeholder="Seu RF ou usuário"
               />
             </div>
@@ -75,7 +73,7 @@ export default function Login({ onLogin }: LoginProps) {
                   required
                   value={rf}
                   onChange={(e) => setRf(e.target.value)}
-                  className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   placeholder="Seu RF"
                 />
               </div>
@@ -86,7 +84,7 @@ export default function Login({ onLogin }: LoginProps) {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   placeholder="Seu nome de usuário"
                 />
               </div>
@@ -100,7 +98,7 @@ export default function Login({ onLogin }: LoginProps) {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+              className="w-full px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="••••••••"
             />
           </div>
@@ -115,7 +113,7 @@ export default function Login({ onLogin }: LoginProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700  text-white font-semibold py-2.5 rounded-lg shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -137,7 +135,7 @@ export default function Login({ onLogin }: LoginProps) {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
           >
             {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Entre agora'}
           </button>

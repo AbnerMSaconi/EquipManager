@@ -127,7 +127,7 @@ export default function Inventory({ user }: InventoryProps) {
     exportToCSV(exportData, 'estoque.csv');
   };
 
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(search.toLowerCase()) ||
     item.category?.toLowerCase().includes(search.toLowerCase())
   );
@@ -138,7 +138,7 @@ export default function Inventory({ user }: InventoryProps) {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="relative w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-          <input type="text" placeholder="Buscar equipamentos..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all" />
+          <input type="text" placeholder="Buscar equipamentos..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
         </div>
         <div className="flex w-full sm:w-auto gap-2">
           <div className="flex bg-zinc-100 p-1 rounded-xl">
@@ -152,14 +152,14 @@ export default function Inventory({ user }: InventoryProps) {
           <button onClick={handleExport} className="flex-1 sm:flex-none bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all">
             <Download className="w-5 h-5" /> Exportar
           </button>
-          <button onClick={() => setShowAddModal(true)} className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all">
+          <button onClick={() => setShowAddModal(true)} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-100 transition-all">
             <PackagePlus className="w-5 h-5" /> Novo Item
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-zinc-300">
           <PackagePlus className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
@@ -174,69 +174,70 @@ export default function Inventory({ user }: InventoryProps) {
                   <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </div>
               )}
-              
+
               <div className={cn("flex-1", viewMode === 'list' && "w-full")}>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-1 rounded">
-                        {item.category || 'Geral'}
+                {/* Linha 1: Badge + Nome + Quantidade */}
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="shrink-0 text-[10px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-1.5 py-0.5 rounded">
+                      {item.category || 'Geral'}
+                    </span>
+                    {item.minQuantity !== null && item.quantity <= item.minQuantity && (
+                      <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded animate-pulse">
+                        <AlertTriangle className="w-3 h-3" /> Crítico
                       </span>
-                      {/* ALERTA CRÍTICO RESTAURADO */}
-                      {item.minQuantity !== null && item.quantity <= item.minQuantity && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 px-2 py-1 rounded animate-pulse">
-                          <AlertTriangle className="w-3 h-3" /> Estoque Crítico
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-bold text-zinc-900">{item.name}</h3>
-                    <p className="text-sm text-zinc-500 line-clamp-2 mt-1">{item.description}</p>
-                    <div className="flex flex-wrap items-center gap-3 mt-2">
-                      {(item.room || item.cabinet || item.shelf) && (
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {item.room && <span>Sala: {item.room}</span>}
-                          {item.cabinet && <span>• Arm: {item.cabinet}</span>}
-                          {item.shelf && <span>• Prat: {item.shelf}</span>}
-                        </div>
-                      )}
-                      {item.unitValue && (
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                          <DollarSign className="w-3.5 h-3.5" />
-                          <span>R$ {item.unitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                    </div>
+                    )}
+                    <h3 className="text-sm font-bold text-zinc-900 truncate">{item.name}</h3>
                   </div>
-                  <div className="text-right">
-                    <span className={cn("text-2xl font-black", (item.minQuantity !== null && item.quantity <= item.minQuantity) ? "text-red-600" : "text-zinc-900")}>
+                  <div className="shrink-0 flex items-baseline gap-1">
+                    <span className={cn("text-lg font-black leading-none", (item.minQuantity !== null && item.quantity <= item.minQuantity) ? "text-red-600" : "text-zinc-900")}>
                       {item.quantity}
                     </span>
-                    <p className="text-[10px] text-zinc-400 uppercase font-bold">Unidades</p>
+                    <span className="text-[9px] text-zinc-400 uppercase font-bold">un</span>
                   </div>
                 </div>
 
-                <div className={cn("grid grid-cols-2 sm:grid-cols-4 gap-2", viewMode === 'grid' ? "mt-6" : "mt-4 sm:max-w-xl sm:ml-auto")}>
-                  <button onClick={() => setShowActionModal({ type: 'recebimento', item })} className="flex items-center justify-center gap-1.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-semibold text-sm transition-colors">
-                    <Plus className="w-4 h-4" /> Entrada
-                  </button>
-                  <button onClick={() => setShowActionModal({ type: 'retirada', item })} disabled={item.quantity === 0} className="flex items-center justify-center gap-1.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50">
-                    <Minus className="w-4 h-4" /> Saída
-                  </button>
-                  <button onClick={() => setShowActionModal({ type: 'quebra', item })} disabled={item.quantity === 0} className="flex items-center justify-center gap-1.5 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50">
-                    <Hammer className="w-4 h-4" /> Quebra
-                  </button>
-                  <button onClick={() => setShowQRModal(item)} className="flex items-center justify-center gap-1.5 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg font-semibold text-sm transition-colors">
-                    <QrCode className="w-4 h-4" /> QR
-                  </button>
+                {/* Linha 2: Descrição + Localização + Valor */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-2">
+                  {item.description && (
+                    <p className="text-xs text-zinc-400 truncate max-w-[180px]">{item.description}</p>
+                  )}
+                  {(item.room || item.cabinet || item.shelf) && (
+                    <div className="flex items-center gap-1 text-xs text-zinc-400">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      {item.room && <span>{item.room}</span>}
+                      {item.cabinet && <span>• {item.cabinet}</span>}
+                      {item.shelf && <span>• {item.shelf}</span>}
+                    </div>
+                  )}
+                  {item.unitValue && (
+                    <div className="flex items-center gap-1 text-xs text-zinc-400">
+                      <DollarSign className="w-3 h-3 shrink-0" />
+                      <span>R$ {item.unitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
                 </div>
-                {user?.role === 'admin' && (
-                  <div className="mt-3 flex justify-end">
-                    <button onClick={() => handleDeleteItem(item.id)} className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" /> Excluir
+
+                {/* Linha 3: Ações + Excluir */}
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setShowActionModal({ type: 'recebimento', item })} className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md font-semibold text-xs transition-colors">
+                    <Plus className="w-3 h-3" /> Entrada
+                  </button>
+                  <button onClick={() => setShowActionModal({ type: 'retirada', item })} disabled={item.quantity === 0} className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-md font-semibold text-xs transition-colors disabled:opacity-50">
+                    <Minus className="w-3 h-3" /> Saída
+                  </button>
+                  <button onClick={() => setShowActionModal({ type: 'quebra', item })} disabled={item.quantity === 0} className="flex items-center gap-1 px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-md font-semibold text-xs transition-colors disabled:opacity-50">
+                    <Hammer className="w-3 h-3" /> Quebra
+                  </button>
+                  <button onClick={() => setShowQRModal(item)} className="flex items-center gap-1 px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-md font-semibold text-xs transition-colors">
+                    <QrCode className="w-3 h-3" /> QR
+                  </button>
+                  {user?.role === 'admin' && (
+                    <button onClick={() => handleDeleteItem(item.id)} className="ml-auto flex items-center gap-1 text-xs text-red-400 hover:text-red-600 transition-colors">
+                      <Trash2 className="w-3 h-3" />
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -244,7 +245,7 @@ export default function Inventory({ user }: InventoryProps) {
       )}
 
       {/* FAB Mobile Scanner */}
-      <button onClick={() => setShowScannerModal(true)} className="fixed bottom-24 right-6 z-40 sm:hidden bg-emerald-600 text-white p-4 rounded-full shadow-xl shadow-emerald-200/50 hover:bg-emerald-700 transition-all border-4 border-white">
+      <button onClick={() => setShowScannerModal(true)} className="fixed bottom-24 right-6 z-40 sm:hidden bg-blue-600 text-white p-4 rounded-full shadow-xl shadow-blue-200/50 hover:bg-blue-700 transition-all border-4 border-white">
         <ScanLine className="w-6 h-6" />
       </button>
 
@@ -258,14 +259,14 @@ export default function Inventory({ user }: InventoryProps) {
                 <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-zinc-600"><X className="w-6 h-6" /></button>
               </div>
               <form onSubmit={handleAddItem} className="p-6 space-y-4">
-                <div><label className="block text-sm font-medium text-zinc-700 mb-1">Nome</label><input required type="text" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
+                <div><label className="block text-sm font-medium text-zinc-700 mb-1">Nome</label><input required type="text" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Qtd Inicial</label><input required type="number" min="0" value={newItem.quantity} onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
-                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Qtd Mín (Alerta)</label><input type="number" min="0" value={newItem.minQuantity} onChange={(e) => setNewItem({ ...newItem, minQuantity: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
+                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Qtd Inicial</label><input required type="number" min="0" value={newItem.quantity} onChange={(e) => setNewItem({ ...newItem, quantity: Number(e.target.value) })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" /></div>
+                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Qtd Mín (Alerta)</label><input type="number" min="0" value={newItem.minQuantity} onChange={(e) => setNewItem({ ...newItem, minQuantity: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Valor Unitário</label><input type="number" step="0.01" min="0" value={newItem.unitValue} onChange={(e) => setNewItem({ ...newItem, unitValue: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
-                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Categoria</label><input type="text" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
+                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Valor Unitário</label><input type="number" step="0.01" min="0" value={newItem.unitValue} onChange={(e) => setNewItem({ ...newItem, unitValue: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" /></div>
+                  <div><label className="block text-sm font-medium text-zinc-700 mb-1">Categoria</label><input type="text" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" /></div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div><label className="block text-sm font-medium text-zinc-700 mb-1">Sala</label><input type="text" value={newItem.room} onChange={(e) => setNewItem({ ...newItem, room: e.target.value })} className="w-full px-2 py-2 border rounded-lg text-sm" /></div>
@@ -273,7 +274,7 @@ export default function Inventory({ user }: InventoryProps) {
                   <div><label className="block text-sm font-medium text-zinc-700 mb-1">Prat</label><input type="text" value={newItem.shelf} onChange={(e) => setNewItem({ ...newItem, shelf: e.target.value })} className="w-full px-2 py-2 border rounded-lg text-sm" /></div>
                 </div>
                 <div><label className="block text-sm font-medium text-zinc-700 mb-1">Descrição</label><textarea rows={2} value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} className="w-full px-4 py-2 border rounded-lg resize-none" /></div>
-                <button type="submit" className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">Cadastrar</button>
+                <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl">Cadastrar</button>
               </form>
             </motion.div>
           </div>
@@ -294,13 +295,13 @@ export default function Inventory({ user }: InventoryProps) {
               <form onSubmit={handleAction} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 mb-1">Quantidade</label>
-                  <input required type="number" min="1" max={showActionModal.type !== 'recebimento' ? showActionModal.item.quantity : undefined} value={actionData.quantity} onChange={(e) => setActionData({ ...actionData, quantity: Number(e.target.value) })} className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                  <input required type="number" min="1" max={showActionModal.type !== 'recebimento' ? showActionModal.item.quantity : undefined} value={actionData.quantity} onChange={(e) => setActionData({ ...actionData, quantity: Number(e.target.value) })} className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
 
                 {showActionModal.type === 'retirada' && (
                   <>
-                    <div><label className="block text-sm font-medium text-zinc-700 mb-1">Destino / Responsável</label><input required type="text" value={actionData.destination} onChange={(e) => setActionData({ ...actionData, destination: e.target.value })} className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
-                    <div><label className="block text-sm font-medium text-zinc-700 mb-1">Prazo de Devolução</label><input type="date" value={actionData.returnDeadline} onChange={(e) => setActionData({ ...actionData, returnDeadline: e.target.value })} className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-emerald-500" /></div>
+                    <div><label className="block text-sm font-medium text-zinc-700 mb-1">Destino / Responsável</label><input required type="text" value={actionData.destination} onChange={(e) => setActionData({ ...actionData, destination: e.target.value })} className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Local de destino ou responsável" /> </div>
+                    <div><label className="block text-sm font-medium text-zinc-700 mb-1">Prazo de Devolução</label><input type="date" value={actionData.returnDeadline} onChange={(e) => setActionData({ ...actionData, returnDeadline: e.target.value })} className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500" /></div>
                   </>
                 )}
 
@@ -308,7 +309,7 @@ export default function Inventory({ user }: InventoryProps) {
                   <div><label className="block text-sm font-medium text-red-700 mb-1">Motivo da Quebra</label><textarea required rows={3} value={actionData.observations} onChange={(e) => setActionData({ ...actionData, observations: e.target.value })} className="w-full px-4 py-2 border border-red-200 bg-red-50 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-none" /></div>
                 )}
 
-                <button type="submit" className={cn("w-full text-white font-bold py-3 rounded-xl transition-all mt-4", showActionModal.type === 'recebimento' ? "bg-emerald-600 hover:bg-emerald-700" : showActionModal.type === 'quebra' ? "bg-red-600 hover:bg-red-700" : "bg-zinc-900 hover:bg-zinc-800")}>
+                <button type="submit" className={cn("w-full text-white font-bold py-3 rounded-xl transition-all mt-4", showActionModal.type === 'recebimento' ? "bg-blue-600 hover:bg-blue-700" : showActionModal.type === 'quebra' ? "bg-red-600 hover:bg-red-700" : "bg-zinc-900 hover:bg-zinc-800")}>
                   Confirmar
                 </button>
               </form>
@@ -323,12 +324,12 @@ export default function Inventory({ user }: InventoryProps) {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm"><motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-8 flex flex-col items-center"><div className="bg-white p-4 rounded-xl shadow-sm border border-zinc-100 mb-4"><QRCodeSVG value={`ITEM:${showQRModal.id}`} size={200} /></div><p className="font-bold text-zinc-900 text-center">{showQRModal.name}</p><button onClick={() => setShowQRModal(null)} className="mt-6 text-zinc-500">Fechar</button></motion.div></div>
         )}
         {showScannerModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/90 backdrop-blur-sm"><div className="w-full max-w-md p-4"><button onClick={() => setShowScannerModal(false)} className="bg-white text-black p-2 rounded-full absolute top-4 right-4 z-10"><X /></button><div className="rounded-xl overflow-hidden aspect-square"><Scanner onScan={(r) => { if(r?.length){ const item = items.find(i => i.id === parseInt(r[0].rawValue.replace('ITEM:',''))); if(item){ setShowScannerModal(false); setScannedItem(item); } } }} onError={(e) => { console.error(e); setShowScannerModal(false); }} /></div></div></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/90 backdrop-blur-sm"><div className="w-full max-w-md p-4"><button onClick={() => setShowScannerModal(false)} className="bg-white text-black p-2 rounded-full absolute top-4 right-4 z-10"><X /></button><div className="rounded-xl overflow-hidden aspect-square"><Scanner onScan={(r) => { if (r?.length) { const item = items.find(i => i.id === parseInt(r[0].rawValue.replace('ITEM:', ''))); if (item) { setShowScannerModal(false); setScannedItem(item); } } }} onError={(e) => { console.error(e); setShowScannerModal(false); }} /></div></div></div>
         )}
       </AnimatePresence>
       <AnimatePresence>
         {scannedItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm"><motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl p-6 w-full max-w-sm"><h2 className="text-xl font-bold mb-4">{scannedItem.name}</h2><div className="grid grid-cols-3 gap-2"><button onClick={() => { setShowActionModal({ type: 'recebimento', item: scannedItem }); setScannedItem(null); }} className="bg-emerald-50 py-3 rounded-lg"><Plus className="mx-auto" /></button><button onClick={() => { setShowActionModal({ type: 'retirada', item: scannedItem }); setScannedItem(null); }} className="bg-amber-50 py-3 rounded-lg"><Minus className="mx-auto" /></button><button onClick={() => { setShowActionModal({ type: 'quebra', item: scannedItem }); setScannedItem(null); }} className="bg-red-50 py-3 rounded-lg"><Hammer className="mx-auto" /></button></div><button onClick={() => setScannedItem(null)} className="w-full mt-4 text-zinc-500">Cancelar</button></motion.div></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm"><motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl p-6 w-full max-w-sm"><h2 className="text-xl font-bold mb-4">{scannedItem.name}</h2><div className="grid grid-cols-3 gap-2"><button onClick={() => { setShowActionModal({ type: 'recebimento', item: scannedItem }); setScannedItem(null); }} className="bg-blue-50 py-3 rounded-lg"><Plus className="mx-auto" /></button><button onClick={() => { setShowActionModal({ type: 'retirada', item: scannedItem }); setScannedItem(null); }} className="bg-amber-50 py-3 rounded-lg"><Minus className="mx-auto" /></button><button onClick={() => { setShowActionModal({ type: 'quebra', item: scannedItem }); setScannedItem(null); }} className="bg-red-50 py-3 rounded-lg"><Hammer className="mx-auto" /></button></div><button onClick={() => setScannedItem(null)} className="w-full mt-4 text-zinc-500">Cancelar</button></motion.div></div>
         )}
       </AnimatePresence>
     </div>
