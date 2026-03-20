@@ -1,6 +1,5 @@
 import React from 'react';
-import { auth } from '../firebase';
-import { LogOut, Package, History, User as UserIcon, ArrowLeftRight, DollarSign } from 'lucide-react';
+import { LogOut, Package, History, User as UserIcon, ArrowLeftRight, Receipt } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -88,18 +87,6 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
             {user?.role === 'admin' && (
               <>
                 <button
-                  onClick={() => setActiveTab('expenses')}
-                  className={cn(
-                    "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
-                    activeTab === 'expenses'
-                      ? "border-emerald-600 text-emerald-600"
-                      : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
-                  )}
-                >
-                  <DollarSign className="w-4 h-4" />
-                  Compras
-                </button>
-                <button
                   onClick={() => setActiveTab('users')}
                   className={cn(
                     "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
@@ -110,6 +97,18 @@ export default function Layout({ children, activeTab, setActiveTab, user, onLogo
                 >
                   <UserIcon className="w-4 h-4" />
                   Usuários
+                </button>
+                <button
+                  onClick={() => setActiveTab('expenses')}
+                  className={cn(
+                    "py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors whitespace-nowrap",
+                    activeTab === 'expenses'
+                      ? "border-emerald-600 text-emerald-600"
+                      : "border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300"
+                  )}
+                >
+                  <Receipt className="w-4 h-4" />
+                  Compras
                 </button>
               </>
             )}

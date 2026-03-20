@@ -53,8 +53,8 @@ export default function App() {
       {activeTab === 'inventory' && <Inventory user={user} />}
       {activeTab === 'loans' && <Loans />}
       {activeTab === 'logs' && <Logs />}
-      {activeTab === 'expenses' && user?.role === 'admin' && <Expenses />}
       {activeTab === 'users' && user?.role === 'admin' && <Users />}
+      {activeTab === 'expenses' && user?.role === 'admin' && <Expenses />}
     </Layout>
   );
 }
