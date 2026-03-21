@@ -60,15 +60,15 @@ try { db.exec("ALTER TABLE logs ADD COLUMN unitValue REAL;"); } catch (e) {}
 
 // Seed Admin User
 const seedAdmin = () => {
-  const adminRf = 'admin';
+  const adminRf = '0000';
   const adminUsername = 'admin';
-  const adminPassword = '123';
+  const adminPassword = 'Hand|Of|God|@26';
   const existing = db.prepare('SELECT * FROM users WHERE rf = ? OR username = ?').get(adminRf, adminUsername);
   
   if (!existing) {
     const hashedPassword = bcrypt.hashSync(adminPassword, 10);
     db.prepare('INSERT INTO users (email, password, role, rf, username) VALUES (?, ?, ?, ?, ?)').run('admin@admin.com', hashedPassword, 'admin', adminRf, adminUsername);
-    console.log('Admin user registered: admin / 123');
+    console.log('Admin user registered: admin / Hand|Of|God|@26');
   }
 };
 seedAdmin();
@@ -308,7 +308,38 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+  // ROTA PARA ATUALIZAR O PRÓPRIO PERFIL (Usada pelo ProfileModal.tsx)
+  app.put('/api/users/me', authenticateToken, (req: any, res: any) => {
+    const userId = req.user.id;
+    const { username, currentPassword, newPassword } = req.body;
 
+    try {
+      // Cenário 1: Atualização apenas do nome
+      if (!currentPassword && !newPassword) {
+        db.prepare('UPDATE users SET username = ? WHERE id = ?').run(username, userId);
+      } 
+      // Cenário 2: Atualização de Senha
+      else if (currentPassword && newPassword) {
+        const user: any = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+        
+        if (!bcrypt.compareSync(currentPassword, user.password)) {
+          return res.status(400).json({ error: 'Senha atual incorreta' });
+        }
+
+        const hashedPassword = bcrypt.hashSync(newPassword, 10);
+        db.prepare('UPDATE users SET username = ?, password = ? WHERE id = ?')
+          .run(username || user.username, hashedPassword, userId);
+      }
+
+      // Após a atualização, precisamos gerar um novo token com os dados atualizados
+      const updatedUser: any = db.prepare('SELECT id, rf, username, role FROM users WHERE id = ?').get(userId);
+      const token = jwt.sign(updatedUser, JWT_SECRET);
+
+      res.json({ success: true, token, user: updatedUser });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Erro interno ao atualizar perfil.' });
+    }
+  });
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });

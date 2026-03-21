@@ -66,31 +66,31 @@ export default function ProfileModal({ user, onClose, onUserUpdate }: ProfileMod
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-zinc-900/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-zinc-900/50 dark:bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
-        className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden"
+        className="bg-white dark:bg-zinc-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden border border-transparent dark:border-zinc-800"
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-zinc-900">Meu Perfil</h2>
-            <p className="text-xs text-zinc-400 mt-0.5">RF: {user?.rf || '-'}</p>
+            <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Meu Perfil</h2>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">RF: {user?.rf || '-'}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-1.5 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-zinc-100 px-5">
+        <div className="flex border-b border-zinc-100 dark:border-zinc-800 px-5">
           <button
             onClick={() => { setTab('name'); setError(''); setSuccess(''); }}
             className={cn(
               "flex items-center gap-1.5 py-3 px-1 mr-6 border-b-2 text-sm font-semibold transition-colors",
-              tab === 'name' ? "border-blue-600 text-blue-600" : "border-transparent text-zinc-400 hover:text-zinc-600"
+              tab === 'name' ? "border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400" : "border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
             )}
           >
             <User className="w-4 h-4" /> Nome
@@ -99,7 +99,7 @@ export default function ProfileModal({ user, onClose, onUserUpdate }: ProfileMod
             onClick={() => { setTab('password'); setError(''); setSuccess(''); }}
             className={cn(
               "flex items-center gap-1.5 py-3 px-1 border-b-2 text-sm font-semibold transition-colors",
-              tab === 'password' ? "border-blue-600 text-blue-600" : "border-transparent text-zinc-400 hover:text-zinc-600"
+              tab === 'password' ? "border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-400" : "border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
             )}
           >
             <Lock className="w-4 h-4" /> Senha
@@ -115,7 +115,7 @@ export default function ProfileModal({ user, onClose, onUserUpdate }: ProfileMod
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="mb-4 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm"
+                className="mb-4 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/50 rounded-xl text-green-700 dark:text-green-400 text-sm"
               >
                 <CheckCircle2 className="w-4 h-4 shrink-0" /> {success}
               </motion.div>
@@ -126,7 +126,7 @@ export default function ProfileModal({ user, onClose, onUserUpdate }: ProfileMod
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"
+                className="mb-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl text-red-600 dark:text-red-400 text-sm"
               >
                 <AlertCircle className="w-4 h-4 shrink-0" /> {error}
               </motion.div>
@@ -136,12 +136,12 @@ export default function ProfileModal({ user, onClose, onUserUpdate }: ProfileMod
           {tab === 'name' ? (
             <form onSubmit={handleSaveName} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Nome de exibição</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Nome de exibição</label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all dark:text-zinc-100 dark:placeholder-zinc-600"
                   placeholder="Seu nome de usuário"
                 />
               </div>
@@ -157,54 +157,54 @@ export default function ProfileModal({ user, onClose, onUserUpdate }: ProfileMod
           ) : (
             <form onSubmit={handleSavePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Senha atual</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Senha atual</label>
                 <div className="relative">
                   <input
                     type={showCurrent ? 'text' : 'password'}
                     required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full px-3.5 py-2.5 pr-10 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
+                    className="w-full px-3.5 py-2.5 pr-10 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all dark:text-zinc-100 dark:placeholder-zinc-600"
                     placeholder="••••••••"
                   />
-                  <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+                  <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300">
                     {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Nova senha</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Nova senha</label>
                 <div className="relative">
                   <input
                     type={showNew ? 'text' : 'password'}
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3.5 py-2.5 pr-10 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
+                    className="w-full px-3.5 py-2.5 pr-10 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all dark:text-zinc-100 dark:placeholder-zinc-600"
                     placeholder="••••••••"
                   />
-                  <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+                  <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300">
                     {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Confirmar nova senha</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirmar nova senha</label>
                 <input
                   type="password"
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={cn(
-                    "w-full px-3.5 py-2.5 bg-zinc-50 border rounded-xl focus:ring-2 outline-none text-sm transition-all",
+                    "w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-950 border rounded-xl focus:ring-2 outline-none text-sm transition-all dark:text-zinc-100 dark:placeholder-zinc-600",
                     confirmPassword && newPassword !== confirmPassword
-                      ? "border-red-300 focus:ring-red-400"
-                      : "border-zinc-200 focus:ring-blue-500"
+                      ? "border-red-300 dark:border-red-800 focus:ring-red-400"
+                      : "border-zinc-200 dark:border-zinc-800 focus:ring-blue-500"
                   )}
                   placeholder="••••••••"
                 />
                 {confirmPassword && newPassword !== confirmPassword && (
-                  <p className="text-xs text-red-500 mt-1">Senhas não coincidem</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1">Senhas não coincidem</p>
                 )}
               </div>
               <button
